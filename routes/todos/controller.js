@@ -1,5 +1,4 @@
-const { todo: todos } = require('../../models'),
-    { get } = require('../../config')
+const { get } = require('../../config')
 
 module.exports = {
     getAll: (req, res) => {

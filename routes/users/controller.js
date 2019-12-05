@@ -1,5 +1,12 @@
-const { user: users } = require('../../models'),
-    { get } = require('../../config')
+const {
+    JWT_SECRET_KEY,
+    get
+} = require('../../config'),
+    {
+        comparePassword,
+        hashPassword
+    } = require('../../helpers'),
+    jwt = require('jsonwebtoken')
 
 module.exports = {
     getAll: (req, res) => {
@@ -18,42 +25,61 @@ module.exports = {
             })
     },
     login: (req, res) => {
-        get()
-            .collection('users')
-            .find({
-                email: req.body.email
-            },
-                {
-                    projection: {
-                        _id: 0,
-                        email: 0
+        try {
+            get()
+                .collection('users')
+                .find(
+                    {
+                        email: req.body.email
+                    },
+                    {
+                        projection: {
+                            _id: 0,
+                            email: 0
+                        }
                     }
-                }
-            )
-            .toArray()
-            .then(result => {
-                if (result.length > 0) {
-                    let item = result.find(item => {
-                        return item.password === req.body.password
-                    })
+                )
+                .toArray()
+                .then(async result => {
+                    if (result.length > 0) {
+                        let id = result[0].id,
+                            firstName = result[0].firstName,
+                            lastName = result[0].lastName,
+                            password = result[0].password
 
-                    if (item != null) {
-                        res.send({
-                            id: item.id,
-                            firstName: item.firstName,
-                            lastName: item.lastName
-                        })
+                        let decision = await comparePassword(req.body.password, password)
+
+                        if (decision) {
+                            const token = jwt.sign(
+                                {
+                                    id,
+                                    firstName,
+                                    lastName
+                                },
+                                JWT_SECRET_KEY,
+                                {
+                                    expiresIn: '1d'
+                                }
+                            )
+
+                            res.send({
+                                token
+                            })
+                        } else {
+                            res.send({
+                                message: 'Email or password is wrong!'
+                            })
+                        }
                     } else {
                         res.send({
                             message: 'Email or password is wrong!'
                         })
                     }
-                } else {
-                    res.send({
-                        message: 'Email or password is wrong!'
-                    })
-                }
-            })
+                })
+        } catch (error) {
+            console.log(error)
+        }
+
     },
     getById: (req, res) => {
         get()
@@ -110,7 +136,9 @@ module.exports = {
                     .collection('users')
                     .find({})
                     .toArray()
-                    .then(result2 => {
+                    .then(async result2 => {
+                        let password = await hashPassword(req.body.password)
+
                         get()
                             .collection('users')
                             .insertOne({
@@ -118,7 +146,7 @@ module.exports = {
                                 firstName: req.body.firstName,
                                 lastName: req.body.lastName,
                                 email: req.body.email,
-                                password: req.body.password
+                                password: password
                             })
                             .then(result3 => {
                                 res.send({

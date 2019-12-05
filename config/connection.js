@@ -18,7 +18,6 @@ const connect = callback => {
         },
         function (e, client) {
             if (e) {
-                console.log(e)
                 throw {
                     error: 'Database connection is failed'
                 }
@@ -43,4 +42,3 @@ module.exports = {
     get,
     close
 }
-
