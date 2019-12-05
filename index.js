@@ -20,10 +20,6 @@ app.use(
                 method: ['GET']
             },
             {
-                url: '/user',
-                method: ['GET']
-            },
-            {
                 url: '/user/sign-up',
                 method: ['POST']
             },
@@ -34,7 +30,6 @@ app.use(
         ]
     })
 )
-
 app.use((err, req, res, next) => {
     if (err.name === 'UnauthorizedError') {
         return res.status(401).json({
@@ -44,6 +39,7 @@ app.use((err, req, res, next) => {
 
     return next()
 })
+
 app.use('/', require('./routes'))
 app.use('/todo', require('./routes/todos'))
 app.use('/user', require('./routes/users'))
